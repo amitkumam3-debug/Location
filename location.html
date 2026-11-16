@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>IMEI Checker</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #101114;
+            color: white;
+        }
+
+        .card {
+            width: 92%;
+            max-width: 430px;
+            padding: 30px;
+            border-radius: 20px;
+            background: #1b1d22;
+            box-shadow: 0 15px 40px rgba(0,0,0,.45);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            outline: none;
+            background: #101114;
+            color: white;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #ff7a00;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: .9;
+        }
+
+        #result {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            line-height: 1.6;
+        }
+
+        .success {
+            background: #12351f;
+            border: 1px solid #28a745;
+        }
+
+        .error {
+            background: #3b1717;
+            border: 1px solid #dc3545;
+        }
+
+        .note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>📱 IMEI Checker</h1>
+
+    <div class="subtitle">
+        Check whether an IMEI number is valid
+    </div>
+
+    <input
+        id="imei"
+        type="text"
+        maxlength="18"
+        placeholder="Enter 15-digit IMEI"
+    >
+
+    <button onclick="checkIMEI()">
+        Check IMEI
+    </button>
+
+    <div id="result"></div>
+
+    <div class="note">
+        IMEI alone cannot provide a phone's live GPS location.
+    </div>
+
+</div>
+
+
+<script>
+async function checkIMEI() {
+
+    const input = document.getElementById("imei");
+    const result = document.getElementById("result");
+
+    const imei = input.value.replace(/[\s-]/g, "");
+
+    if (!/^\d{15}$/.test(imei)) {
+        result.style.display = "block";
+        result.className = "error";
+        result.innerHTML =
+            "❌ Please enter a valid 15-digit IMEI.";
+        return;
+    }
+
+    try {
+
+        const response = await fetch("/check", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                imei: imei
+            })
+        });
+
+        const data = await response.json();
+
+        result.style.display = "block";
+
+        if (data.valid) {
+
+            result.className = "success";
+
+            result.innerHTML = `
+                ✅ <b>${data.message}</b><br>
+                📍 ${data.location}
+            `;
+
+        } else {
+
+            result.className = "error";
+
+            result.innerHTML = `
+                ❌ <b>${data.message}</b>
+            `;
+        }
+
+    } catch (error) {
+
+        result.style.display = "block";
+        result.className = "error";
+        result.innerHTML = "❌ Server error. Try again.";
+    }
+}
+</script>
+
+</body>
+</html>
